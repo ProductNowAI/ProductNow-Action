@@ -1,0 +1,7 @@
+name: 'ProductNow Action'
+description: 'Says Hello world!'
+runs:
+  using: 'composite'
+  steps:
+    - shell: bash
+      run: echo "Hello world!"

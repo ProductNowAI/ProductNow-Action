@@ -1,14 +1,17 @@
 name: 'ProductNow Action'
-description: 'Says Hello world!'
+description: 'Generic ProductNow Action'
 inputs:
-  openai_api_key:
-    description: 'OpenAI API key'
+  anthropic_api_key:
+    description: 'Anthropic API key'
     required: true
   mcp_url:
     description: 'MCP server URL'
     required: true
   mcp_key:
     description: 'MCP API key'
+    required: true
+  task:
+    description: 'Task for the action to perform'
     required: true
   interval_hours:
     description: 'Interval, in hours, between runs'
@@ -17,28 +20,23 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - id: diff
+    # TASK 1: UPDATE RTFM
+    - id: update_rtfm
+      if: inputs.task == 'update_rtfm'
       shell: bash
       run: |
         SINCE_SHA=$(git rev-list -1 --before="${{ inputs.interval_hours }} hours ago" HEAD)
         if [ -z "$SINCE_SHA" ]; then
           echo "No commit found before the interval window; skipping."
-          echo "has_diff=false" >> "$GITHUB_OUTPUT"
           exit 0
         fi
         git diff "$SINCE_SHA" HEAD > "$RUNNER_TEMP/diff.patch"
         if [ -s "$RUNNER_TEMP/diff.patch" ]; then
-          echo "has_diff=true" >> "$GITHUB_OUTPUT"
-          echo "diff_file=$RUNNER_TEMP/diff.patch" >> "$GITHUB_OUTPUT"
+          DIFF_FILE="$RUNNER_TEMP/diff.patch" "${{ github.action_path }}/scripts/update_documentation.sh"
         else
           echo "No changes since the interval window; skipping."
-          echo "has_diff=false" >> "$GITHUB_OUTPUT"
         fi
-    - if: steps.diff.outputs.has_diff == 'true'
-      shell: bash
-      run: "${{ github.action_path }}/scripts/update_documentation.sh"
       env:
-        DIFF_FILE: ${{ steps.diff.outputs.diff_file }}
-        OPENAI_API_KEY: ${{ inputs.openai_api_key }}
+        ANTHROPIC_API_KEY: ${{ inputs.anthropic_api_key }}
         MCP_URL: ${{ inputs.mcp_url }}
         MCP_KEY: ${{ inputs.mcp_key }}

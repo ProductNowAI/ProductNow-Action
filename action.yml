@@ -14,14 +14,31 @@ inputs:
     description: 'Interval, in hours, between runs'
     required: false
     default: '3'
-  instructions_doc_id:
-    description: 'ID of the instructions document'
-    required: true
-  write_folder_id:
-    description: 'ID of the folder to write output to'
-    required: false
 runs:
   using: 'composite'
   steps:
-    - shell: bash
-      run: echo "Hello world!"
+    - id: diff
+      shell: bash
+      run: |
+        SINCE_SHA=$(git rev-list -1 --before="${{ inputs.interval_hours }} hours ago" HEAD)
+        if [ -z "$SINCE_SHA" ]; then
+          echo "No commit found before the interval window; skipping."
+          echo "has_diff=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        git diff "$SINCE_SHA" HEAD > "$RUNNER_TEMP/diff.patch"
+        if [ -s "$RUNNER_TEMP/diff.patch" ]; then
+          echo "has_diff=true" >> "$GITHUB_OUTPUT"
+          echo "diff_file=$RUNNER_TEMP/diff.patch" >> "$GITHUB_OUTPUT"
+        else
+          echo "No changes since the interval window; skipping."
+          echo "has_diff=false" >> "$GITHUB_OUTPUT"
+        fi
+    - if: steps.diff.outputs.has_diff == 'true'
+      shell: bash
+      run: "${{ github.action_path }}/scripts/update_documentation.sh"
+      env:
+        DIFF_FILE: ${{ steps.diff.outputs.diff_file }}
+        OPENAI_API_KEY: ${{ inputs.openai_api_key }}
+        MCP_URL: ${{ inputs.mcp_url }}
+        MCP_KEY: ${{ inputs.mcp_key }}

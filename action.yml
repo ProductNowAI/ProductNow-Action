@@ -1,5 +1,12 @@
 name: 'ProductNow Action'
 description: 'Says Hello world!'
+inputs:
+  openai_api_key:
+    description: 'OpenAI API key'
+    required: true
+  mcp_url:
+    description: 'MCP server URL'
+    required: true
 runs:
   using: 'composite'
   steps:

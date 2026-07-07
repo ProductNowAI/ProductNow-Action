@@ -7,6 +7,10 @@ inputs:
   mcp_url:
     description: 'MCP server URL'
     required: true
+  interval_hours:
+    description: 'Interval, in hours, between runs'
+    required: false
+    default: '3'
 runs:
   using: 'composite'
   steps:

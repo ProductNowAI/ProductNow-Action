@@ -7,6 +7,9 @@ inputs:
   mcp_url:
     description: 'MCP server URL'
     required: true
+  mcp_key:
+    description: 'MCP API key'
+    required: true
   interval_hours:
     description: 'Interval, in hours, between runs'
     required: false

@@ -20,6 +20,10 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - id: install_claude_code
+      shell: bash
+      run: npm install -g @anthropic-ai/claude-code
+
     # TASK 1: UPDATE RTFM
     - id: update_rtfm
       if: inputs.task == 'update_rtfm'

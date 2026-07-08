@@ -24,7 +24,7 @@ cat > "$MCP_CONFIG_FILE" <<EOF
 EOF
 
 CLAUDE_RESULT=$(claude --print \
-  --mcp-config "$MCP_CONFIG_FILE" \
+  --mcp-config="$MCP_CONFIG_FILE" \
   "Call the ProductNow MCP server's list_folders tool. Reply with a short confirmation that the call succeeded and how many folders were returned.")
 
 if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then

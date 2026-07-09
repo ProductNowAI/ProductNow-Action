@@ -29,7 +29,7 @@ runs:
       if: inputs.task == 'update_rtfm'
       shell: bash
       run: |
-        SINCE_SHA=$(git rev-list -1 --before="${{ inputs.interval_hours }} hours ago" HEAD)
+        SINCE_SHA=$(git rev-list -1 --before="${{ inputs.interval_hours }} hours ago" HEAD) # TODO: Find a more robust way to get the since sha
         if [ -z "$SINCE_SHA" ]; then
           echo "No commit found before the interval window; skipping."
           exit 0

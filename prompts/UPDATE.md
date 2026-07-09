@@ -110,7 +110,7 @@ update rather than restructuring docs; flag structural recommendations in
    at the top: commit date, commit range, one line per action with the affected
    doc's citation tag and the reason. For a no-op run, a single "no
    documentation-relevant changes" line. Do not rewrite prior entries.
-2. Registry: build the updated registry JSON — apply doc additions/status
+2. Registry: build the updated registry JSON from the RTFM Registry doc — apply doc additions/status
    changes/scope corrections, set `lastProcessedSha` to the head commit sha from
    the run metadata. Edit the registry doc via `switch_document_chat_edit_mode`
    + `post_document_chat_message`, instructing an exact full replacement of the

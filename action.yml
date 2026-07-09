@@ -29,17 +29,9 @@ runs:
       if: inputs.task == 'update_rtfm'
       shell: bash
       run: |
-        SINCE_SHA=$(git rev-list -1 --before="${{ inputs.interval_hours }} hours ago" HEAD)
-        if [ -z "$SINCE_SHA" ]; then
-          echo "No commit found before the interval window; skipping."
-          exit 0
-        fi
-        git diff "$SINCE_SHA" HEAD > "$RUNNER_TEMP/diff.patch"
-        if [ -s "$RUNNER_TEMP/diff.patch" ]; then
-          DIFF_FILE="$RUNNER_TEMP/diff.patch" "${{ github.action_path }}/scripts/update_documentation.sh"
-        else
-          echo "No changes since the interval window; skipping."
-        fi
+        UPDATE_PROMPT_FILE="${{ github.action_path }}/prompts/UPDATE.md" \
+          INTERVAL_HOURS="${{ inputs.interval_hours }}" \
+          "${{ github.action_path }}/scripts/update_documentation.sh"
       env:
         ANTHROPIC_API_KEY: ${{ inputs.anthropic_api_key }}
         MCP_URL: ${{ inputs.mcp_url }}

@@ -84,7 +84,11 @@ echo "Change window ($WINDOW_MODE): $COMMIT_RANGE"
 cat "$DIFF_FILE"
 
 # --- Build the prompt (Claude's only view of the code is this diff) ---
-PROMPT="$(cat "$UPDATE_PROMPT_FILE")
+PROMPT_FILE="$(mktemp)"
+trap 'rm -f "$MCP_CONFIG_FILE" "$DIFF_FILE" "$PROMPT_FILE"' EXIT
+
+cat "$UPDATE_PROMPT_FILE" > "$PROMPT_FILE"
+cat >> "$PROMPT_FILE" <<EOF
 
 ---
 Run metadata:
@@ -96,14 +100,17 @@ Run metadata:
 Change window diff (this is your ONLY view of the code for this run):
 
 \`\`\`diff
-$(cat "$DIFF_FILE")
-\`\`\`"
+EOF
+cat "$DIFF_FILE" >> "$PROMPT_FILE"
+printf '\n```' >> "$PROMPT_FILE"
 
 # --- Main call: reconcile the docs and advance lastProcessedSha to HEAD_SHA ---
+# Piped via stdin (not a CLI argument) since large diffs would otherwise
+# exceed the OS argument-length limit (ARG_MAX) and fail with E2BIG.
 CLAUDE_RESULT=$(claude --print \
   --mcp-config="$MCP_CONFIG_FILE" \
   --allowedTools="mcp__productnow__*" \
-  "$PROMPT")
+  < "$PROMPT_FILE")
 
 if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
   echo "$CLAUDE_RESULT" >> "$GITHUB_STEP_SUMMARY"

@@ -6,6 +6,10 @@ set -euo pipefail
 : "${UPDATE_PROMPT_FILE:?UPDATE_PROMPT_FILE must be set}"
 : "${INTERVAL_HOURS:?INTERVAL_HOURS must be set}"
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck disable=SC1091
+source "${SCRIPT_DIR}/lib/window.sh"
+
 # Cumulative diff budget for one run. Windows bigger than this are processed as
 # a prefix of commits that fits, and the remainder chains to the next run via
 # lastProcessedSha. Any single file diff over the per-file cap is replaced by
@@ -68,27 +72,30 @@ if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
   git fetch --unshallow --quiet || git fetch --deepen=1000 --quiet || true
 fi
 
-SINCE_SHA=""
-WINDOW_MODE="chained"
-if printf '%s' "$PREFLIGHT_RESULT" | grep -qiE '^[0-9a-f]{7,40}$'; then
-  if git cat-file -e "${PREFLIGHT_RESULT}^{commit}" 2>/dev/null; then
-    SINCE_SHA="$PREFLIGHT_RESULT"
-  else
+set +e
+pn_resolve_change_window "$PREFLIGHT_RESULT" "$INTERVAL_HOURS"
+RESOLVE_RC=$?
+set -e
+
+# Distinct outcomes from pn_resolve_change_window — never silent-fallback:
+#   0 chained, 1 first-run NONE→interval, 2 unresolvable sha, 3 unusable preflight
+case "$RESOLVE_RC" in
+  0)
+    ;;
+  1)
+    echo "Registry has no lastProcessedSha (first run); using interval window."
+    ;;
+  2)
     echo "ERROR: registry lastProcessedSha '${PREFLIGHT_RESULT}' does not resolve in this checkout even after deepening." >&2
     echo "A human must reconcile the registry sha with this repository's history." >&2
     exit 1
-  fi
-elif printf '%s' "$PREFLIGHT_RESULT" | grep -qiE '^NONE$'; then
-  # True first run: no registry sha exists yet. The interval window is the only
-  # honest starting point; the run's registry update establishes the chain.
-  echo "Registry has no lastProcessedSha (first run); using interval window."
-  WINDOW_MODE="interval"
-  SINCE_SHA=$(git rev-list -1 --before="${INTERVAL_HOURS} hours ago" HEAD || true)
-else
-  echo "ERROR: preflight could not read the registry after retry (raw: '${PREFLIGHT_RESULT}')." >&2
-  echo "Refusing to fall back to an interval window while a registry may exist — that risks gapping the corpus. Failing so the next run retries the same window." >&2
-  exit 1
-fi
+    ;;
+  *)
+    echo "ERROR: preflight could not read the registry after retry (raw: '${PREFLIGHT_RESULT}')." >&2
+    echo "Refusing to fall back to an interval window while a registry may exist — that risks gapping the corpus. Failing so the next run retries the same window." >&2
+    exit 1
+    ;;
+esac
 
 if [ -z "$SINCE_SHA" ]; then
   echo "No starting commit could be determined; nothing to process. Skipping."

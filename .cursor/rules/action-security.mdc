@@ -1,0 +1,15 @@
+---
+description: Security and trust-boundary rules for this GitHub Action
+alwaysApply: true
+---
+
+# Action security
+
+- Never log, print, or embed `ANTHROPIC_API_KEY`, `MCP_KEY`, `MCP_URL`, or action
+  inputs that carry secrets into prompts, fixtures, step summaries, or commits.
+- Claude must remain MCP-scoped: allowed tools are ProductNow MCP only; the
+  injected git diff is its only code view.
+- Do not add steps that write commits, open PRs, or push to the consumer repo.
+- Workflows in this repo must use `permissions: contents: read` unless a job
+  truly needs more, and every `uses:` must be pinned to a full 40-character SHA.
+- Consumer guidance should recommend pinning this action by commit SHA.

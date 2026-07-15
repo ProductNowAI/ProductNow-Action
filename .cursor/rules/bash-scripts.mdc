@@ -1,0 +1,16 @@
+---
+description: Bash conventions for action scripts
+globs: scripts/**/*.sh
+alwaysApply: false
+---
+
+# Bash scripts
+
+- Start **executable** scripts with `#!/usr/bin/env bash` and `set -euo pipefail`.
+- `scripts/lib/*.sh` are **source-only**: no shebang, no `set -euo pipefail`
+  (they inherit the caller's settings). Lead with `# shellcheck shell=bash`
+  plus a source-only comment.
+- Keep ShellCheck clean; fix new findings rather than disabling rules casually.
+- Put pure, unit-testable logic in `scripts/lib/*.sh` and `source` it from runners.
+- Avoid calling network services (`claude`, HTTP) inside helpers under test.
+- Prefer quoting, `mktemp` + `trap` cleanup, and early exits with clear messages.

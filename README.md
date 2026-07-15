@@ -1,5 +1,8 @@
 # ProductNow-Action
 
+[![CI](https://github.com/ProductNowAI/ProductNow-Action/actions/workflows/ci.yml/badge.svg)](https://github.com/ProductNowAI/ProductNow-Action/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
 A GitHub Action that keeps your ProductNow "RTFM" documentation corpus in sync
 with your code. On a schedule it computes the diff since the last successful
 run and asks Claude — connected only to the ProductNow MCP server — to
@@ -28,7 +31,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0      # full history — see Requirements
-      - uses: your-org/ProductNow-Action@v1
+      # Pin to a full commit SHA in production (supply-chain hygiene).
+      - uses: ProductNowAI/ProductNow-Action@<commit-sha>
         with:
           task: update_rtfm
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -39,7 +43,8 @@ jobs:
 
 Store `ANTHROPIC_API_KEY`, `PN_MCP_URL`, and `PN_MCP_KEY` as
 [repository secrets](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions).
-Replace `your-org/ProductNow-Action@v1` with the ref you publish.
+
+Prefer pinning `@<40-char-sha>` over a mutable tag such as `@v1`.
 
 ## Inputs
 
@@ -84,3 +89,27 @@ Because the sha only advances on success, a failed or interrupted run leaves it
 unchanged and the next run re-processes the same window — no gaps. If the last
 sha can't be resolved (first run, or history unavailable), the action falls back
 to the `interval_hours` window and notes it in the run summary.
+
+## Security
+
+- Secrets stay in GitHub Actions secrets; never put them in workflow files.
+- Claude's tools are limited to ProductNow MCP; code context is the injected diff.
+- This action does not commit or push to your repository.
+
+Report vulnerabilities to **security@productnow.ai**. Full policy:
+[SECURITY.md](SECURITY.md).
+
+## Development
+
+```bash
+brew install bats-core shellcheck actionlint   # macOS
+make lint
+make test
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md), [docs/COMPLIANCE.md](docs/COMPLIANCE.md),
+and [AGENTS.md](AGENTS.md).
+
+## License
+
+Licensed under the [Apache License 2.0](LICENSE).

@@ -1,0 +1,36 @@
+name: Bug report
+description: Report incorrect behavior in ProductNow-Action
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For security issues, email **security@productnow.ai** instead of filing a public issue.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What went wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Workflow snippet (redact secrets), inputs, and observed logs.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Action ref
+      description: Tag or commit SHA you pinned
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
